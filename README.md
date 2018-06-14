@@ -6,6 +6,10 @@ Collective behaviour and bio-hybrid results analysis
    * Includes loaders for experimental results generated with assisipy_utils
      exec tools
 
+Includes:
+* code to compute indices including:
+   * collective decision index
+   * volatility index
 
    
 * v0.4
