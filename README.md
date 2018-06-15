@@ -7,6 +7,7 @@ Collective behaviour and bio-hybrid results analysis
      exec tools
 
 Includes:
+
 * code to compute indices including:
    * collective decision index
    * volatility index

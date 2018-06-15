@@ -62,6 +62,10 @@ class SingleLogDataOwner(object):
         self.data['led'] = None
         self.data['t_offset_temps'] = self._settings.get('t_offset_temps', 0)
 
+        # makes an assumption that name is somethig like "casu-005"
+        # and produces c3
+        self.shortname = "c{}".format(self.cname.split('-')[-1].lstrip('0'))
+
     def read_data(self, ir=True, temp=True, pelt=True, sync=False, all_led=False, nodes='all'):
 
         s1 = "# ===========  reading data for node '{}' ========== #".format(
