@@ -1,0 +1,76 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{minted}
+\usepackage{amsmath}
+
+\newcommand{\scare}[1]{``#1''} 
+
+\title{Collective behaviour Indices}
+
+\date{}%{\today}
+
+\begin{document}
+\maketitle
+
+\noindent Some metrics aimed at quantifying bee group behaviour are implemented in the `cbtb` python package.  This document describes these metrics and provides code examples. 
+
+\section{(Group) Volatility index}
+
+In a collective binary choice assay:
+
+\paragraph*{Intuition:} Quantify the number of \scare{total population swings}, i.e., the number of times a group moves entirely from one decision to the other decision, per time unit.  The metric is fractional, i.e., it can count partial group moves.
+
+\paragraph{Computation}
+Given $n$ bees and the counts of bees on the left/right side at timestep $t$ are given by $L(t), \in [0,n]$; $R(t), \in [0,n]$, s.t. $L(t) + R(t) = n, \quad \forall t$, we compute the volatility score $\upsilon(t)$ for one timestep $t$
+
+\begin{equation}
+	\upsilon(t) = \frac{\|L(t) - L(t+1) \|}{n},
+\end{equation}
+and for a whole experiment / analysis window,
+\begin{equation}
+	V = \frac{r}{t_{max}}\sum_{t=0}^{t_{max}-1} \upsilon(t),
+\end{equation}
+where $r$ is the rate of samples per analysis window, e.g., if the volatility per minute is desired, and the analysis timesteps are  1$\,$s apart, set $r=60$.
+
+\paragraph{code}
+\inputminted{python}{volatility_index_eg.py}
+
+\clearpage
+\section{Collective decision-making index}
+
+\paragraph*{Intuition:} This metric is based on a time budget of how much time a group spends in a significantly unlikely aggregation.  For a binary decision in an unbiased environment, we define the null model as the binomial distribution, such that a large number of the group need to have made the same decision (shown through their position) for the configuration to be considered as \scare{significantly unlikely}.
+
+The binomial distribution tells us what would happen if all the actors moved randomly, and independently from one another.
+
+For a confidence level of $p=0.05$, we find that among groups of $n=12$, aggregations of $a\geq 10$ actors on the same side are considered significant.
+
+
+\paragraph{Computation}
+
+Given $n$ bees and the counts of bees on the left/right side at timestep $t$ are given by $L(t), \in [0,n]$; $R(t), \in [0,n]$, s.t. $L(t) + R(t) = n, \quad \forall t$, and a threshold for significant decision $d$ that is derived from the binomial distribution.
+
+We can compute the majority side $M(t)$ for each timestep as
+\begin{equation}
+	M(t) = \max{(L(t), R(t))}.
+\end{equation}
+Then we simply produce a binary value $c$, for each timestep indicating whether the population has significantly decided or not,
+\begin{equation}
+c(t) = 
+\begin{cases}
+ & 1 \text{  if } M(t) \geq d, \\ 
+ & 0  \text{  otherwise.}
+\end{cases}
+\end{equation}
+Finally, we produce a mean value of these per-step decisions such to give a fractional time budget, in the range $[0, 1]$,
+\begin{equation}
+    C = \frac{1}{t_{max}}\sum_{t=0}^{t_{max}} c(t).
+\end{equation}
+
+
+\paragraph{Code}
+It should be noted that the implementation below uses an upper and a lower threshold in order to compute the value for $c(t)$ directly from $L$ rather than first computing $M$.  I have no idea which is computationally more efficient.
+
+\inputminted{python}{cdi_eg.py}
+
+
+\end{document}
