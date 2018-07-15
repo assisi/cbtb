@@ -98,6 +98,21 @@ def read_temp_sensor_vals(cname, pth, minlen=7, droptail=True):
 
     return temp_lines
 
+def read_air_data(cname, pth, droptail=True):
+    fn = identify_log(cname, pth)
+    # extract lines that are about LED states/changes
+    air_lines = []
+    with open(os.path.join(pth, fn), 'r') as f:
+        for line in f:
+            if line.startswith('airflow_ref;'):
+                if len(line.split(';')) == 3:
+                    air_lines.append(line)
+            # else ignore it
+
+    if droptail:
+        air_lines.pop()
+    return air_lines
+
 def read_led_data(cname, pth, droptail=True):
     fn = identify_log(cname, pth)
     # extract lines that are about LED states/changes
@@ -136,6 +151,25 @@ def read_temps(cname, pth):
     temp_lines = read_temp_sensor_vals(cname, pth)
     peltier_lines = read_peltier_data(cname, pth)
     return temp_lines, peltier_lines
+
+
+def read_tstart_tstop(cname, pth):
+    '''
+    find the first and last line in log, as the t0 and tEnd bounds
+    '''
+    fn = identify_log(cname, pth)
+    with open(os.path.join(pth, fn), 'r') as f:
+        line1 = f.readline()
+        last2 = tail(f, 2)
+
+
+    # we take the last but one because sometimes the last line seems corrupted
+    t_start = float(line1.split(";")[1])
+    t_stop  = float(last2[0].split(";")[1])
+
+    return t_start, t_stop
+
+
 
 #}}}
 
@@ -269,3 +303,37 @@ def sample_signal(raw, start_time=None, dt=0.1, t_offset=0.0, verb=0):
     return sampled, timesteps
 
 #}}}
+
+#{{{ support utils
+def tail(f, window=20):
+    """
+    Returns the last `window` lines of file `f` as a list.
+
+    https://stackoverflow.com/a/7047765
+    """
+    if window == 0:
+        return []
+    BUFSIZ = 1024
+    f.seek(0, 2)
+    bytes = f.tell()
+    size = window + 1
+    block = -1
+    data = []
+    while size > 0 and bytes > 0:
+        if bytes - BUFSIZ > 0:
+            # Seek back one whole BUFSIZ
+            f.seek(block * BUFSIZ, 2)
+            # read BUFFER
+            data.insert(0, f.read(BUFSIZ))
+        else:
+            # file too small, start from begining
+            f.seek(0,0)
+            # only read what was not read
+            data.insert(0, f.read(bytes))
+        linesFound = data[0].count('\n')
+        size -= linesFound
+        bytes -= BUFSIZ
+        block -= 1
+    return ''.join(data).splitlines()[-window:]
+#}}}
+

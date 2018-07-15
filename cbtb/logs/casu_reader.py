@@ -12,6 +12,12 @@ created by assisipy.casu.Casu()
 
 
 '''
+
+'''
+TODO:
+    validate whether SingleLogDataOwner needs nodes= kw.
+'''
+
 import os
 import process_logs as plg
 import fnmatch, yaml
@@ -60,13 +66,15 @@ class SingleLogDataOwner(object):
         self.data['pelt'] = None
         self.data['sync'] = None
         self.data['led'] = None
+        self.data['air'] = None
         self.data['t_offset_temps'] = self._settings.get('t_offset_temps', 0)
 
         # makes an assumption that name is somethig like "casu-005"
         # and produces c3
         self.shortname = "c{}".format(self.cname.split('-')[-1].lstrip('0'))
 
-    def read_data(self, ir=True, temp=True, pelt=True, sync=False, all_led=False, nodes='all'):
+    def read_data(self, ir=True, temp=True, pelt=True, sync=False,
+                  all_led=False, air=False, nodes='all'):
 
         s1 = "# ===========  reading data for node '{}' ========== #".format(
             self.cname,)
@@ -110,6 +118,15 @@ class SingleLogDataOwner(object):
             _led_lines = plg.read_led_data(self.cname, self.pth)
             self.data['led'] = np.loadtxt(
                 _led_lines, usecols=xrange(1,5), delimiter=';')
+
+        if air is True:
+            _air_lines = plg.read_air_data(self.cname, self.pth)
+            self.data['air'] = np.loadtxt(
+                _air_lines, usecols=(1,2), delimiter=';')
+
+
+        # get the extreme time values from log file
+        self._t0, self._tEnd = plg.read_tstart_tstop(self.cname, self.pth)
 
         print "# {} #\n".format("=" * (len(s1) - 4))
 
